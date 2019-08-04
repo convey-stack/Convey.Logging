@@ -1,8 +1,10 @@
 using System;
+using System.Linq;
 using Convey.Logging.Options;
 using Microsoft.AspNetCore.Hosting;
 using Serilog;
 using Serilog.Events;
+using Serilog.Filters;
 using Serilog.Sinks.Elasticsearch;
 
 namespace Convey.Logging
@@ -25,6 +27,10 @@ namespace Convey.Logging
                     .MinimumLevel.Is(level)
                     .Enrich.WithProperty("Environment", context.HostingEnvironment.EnvironmentName)
                     .Enrich.WithProperty("ApplicationName", applicationName);
+                
+                options.ExcludePaths?.ToList().ForEach(p => loggerConfiguration.Filter
+                    .ByExcluding(Matching.WithProperty<string>("RequestPath", n => n.EndsWith(p))));
+                
                 Configure(loggerConfiguration, level, options);
             });
 

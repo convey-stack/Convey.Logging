@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using Convey.Logging.Options;
 
 namespace Convey.Logging
@@ -9,5 +11,6 @@ namespace Convey.Logging
         public FileOptions File { get; set; }
         public ElkOptions Elk { get; set; }
         public SeqOptions Seq { get; set; }
+        public IEnumerable<string> ExcludePaths { get; set; }
     }
 }
