@@ -11,7 +11,8 @@ namespace Convey.Logging
 {
     public static class Extensions
     {
-        public static IWebHostBuilder UseLogging(this IWebHostBuilder webHostBuilder, string applicationName = null)
+        public static IWebHostBuilder UseLogging(this IWebHostBuilder webHostBuilder, string applicationName = null,
+            string serviceId = null)
             => webHostBuilder.UseSerilog((context, loggerConfiguration) =>
             {
                 var options = context.Configuration.GetOptions<LoggerOptions>("logger");
@@ -20,17 +21,37 @@ namespace Convey.Logging
                     level = LogEventLevel.Information;
                 }
 
-                applicationName = string.IsNullOrWhiteSpace(applicationName)
-                    ? Environment.GetEnvironmentVariable("APPLICATION_NAME")
-                    : applicationName;
+                if (!string.IsNullOrWhiteSpace(options.ApplicationName))
+                {
+                    applicationName = options.ApplicationName;
+                }
+
+                var applicationNameEnv = Environment.GetEnvironmentVariable("APPLICATION_NAME");
+                if (!string.IsNullOrWhiteSpace(applicationNameEnv))
+                {
+                    applicationName = applicationNameEnv;
+                }
+                
+                if (!string.IsNullOrWhiteSpace(options.ServiceId))
+                {
+                    serviceId = options.ServiceId;
+                }
+
+                var serviceIdEnv = Environment.GetEnvironmentVariable("SERVICE_ID");
+                if (!string.IsNullOrWhiteSpace(serviceIdEnv))
+                {
+                    serviceId = serviceIdEnv;
+                }
+
                 loggerConfiguration.Enrich.FromLogContext()
                     .MinimumLevel.Is(level)
                     .Enrich.WithProperty("Environment", context.HostingEnvironment.EnvironmentName)
-                    .Enrich.WithProperty("ApplicationName", applicationName);
-                
+                    .Enrich.WithProperty("ApplicationName", applicationName)
+                    .Enrich.WithProperty("ServiceId", serviceId);
+
                 options.ExcludePaths?.ToList().ForEach(p => loggerConfiguration.Filter
                     .ByExcluding(Matching.WithProperty<string>("RequestPath", n => n.EndsWith(p))));
-                
+
                 Configure(loggerConfiguration, level, options);
             });
 
